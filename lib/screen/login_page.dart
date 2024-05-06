@@ -88,7 +88,10 @@ class LoginPage extends StatelessWidget {
                   backgroundColor: Colors.red,
                   minimumSize: const Size.fromHeight(50),
                 ),
-                child: const Text('Continue'),
+                child: const Text(
+                  'Continue',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ),
             TextButton(
