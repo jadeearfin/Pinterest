@@ -24,10 +24,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadPhotos();
+    _scrollController.addListener(_scrollListener);
   }
 
   Future<void> _loadPhotos() async {
-    var photos = await UnsplashService.getRandomPhoto(19);
+    var photos = await UnsplashService.getRandomPhoto(30);
     setState(() {
       _listPhoto.addAll(photos);
       _isHidden.addAll(List<bool>.filled(photos.length, false));
@@ -90,6 +91,30 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _scrollListener() {
+    if (_scrollController.offset >=
+            _scrollController.position.maxScrollExtent &&
+        !_scrollController.position.outOfRange) {
+      _loadPhotos();
+    }
+  }
+
+  Future<void> _showMyDialog(int index) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.transparent,
+          content: Image.network(
+            _listPhoto[index].urls.regular.toString(),
+            fit: BoxFit.cover,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,6 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(8.0),
           child: MasonryGridView.count(
             crossAxisCount: 2,
+            controller: _scrollController,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
             itemCount: _listPhoto.length,
@@ -111,70 +137,73 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget buildPhotoItem(BuildContext context, int index) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: _isHidden[index]
-                ? ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Image.network(
+    return GestureDetector(
+      onTap: () => _showMyDialog(index),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: _isHidden[index]
+                  ? ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Image.network(
+                        _listPhoto[index].urls.thumb.toString(),
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Image.network(
                       _listPhoto[index].urls.thumb.toString(),
                       fit: BoxFit.cover,
                     ),
-                  )
-                : Image.network(
-                    _listPhoto[index].urls.thumb.toString(),
-                    fit: BoxFit.cover,
-                  ),
-          ),
-          if (_isHidden[index])
+            ),
+            if (_isHidden[index])
+              Positioned(
+                right: 5,
+                bottom: 5,
+                child: ElevatedButton(
+                  onPressed: () => setState(() {
+                    _isHidden[index] = false;
+                  }),
+                  child: const Text('Undo Hide'),
+                ),
+              ),
             Positioned(
               right: 5,
               bottom: 5,
-              child: ElevatedButton(
-                onPressed: () => setState(() {
-                  _isHidden[index] = false;
-                }),
-                child: const Text('Undo Hide'),
+              child: PopupMenuButton<String>(
+                onSelected: (value) =>
+                    handleMenuAction(value, context, index, _listPhoto[index]),
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'Download',
+                    child: Text('Download image'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'Hide',
+                    child: Text('Hide pin'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'Report',
+                    child: Text('Report pin'),
+                  ),
+                ],
+                icon: const Icon(Icons.more_horiz, color: Colors.white),
               ),
             ),
-          Positioned(
-            right: 5,
-            bottom: 5,
-            child: PopupMenuButton<String>(
-              onSelected: (value) =>
-                  handleMenuAction(value, context, index, _listPhoto[index]),
-              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                const PopupMenuItem<String>(
-                  value: 'Download',
-                  child: Text('Download image'),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'Hide',
-                  child: Text('Hide pin'),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'Report',
-                  child: Text('Report pin'),
-                ),
-              ],
-              icon: const Icon(Icons.more_horiz, color: Colors.white),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -15,10 +15,19 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _timer; // Timer for debouncing
+  final List<Photo> _photos = [];
 
   @override
   void initState() {
     super.initState();
+    _loadPhotos();
+  }
+
+  Future<void> _loadPhotos() async {
+    var photos = await UnsplashService.getRandomPhoto(30);
+    setState(() {
+      _photos.addAll(photos);
+    });
   }
 
   @override
@@ -40,8 +49,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
       });
     });
   }
-
-  final List<Photo> _photos = [];
 
   @override
   Widget build(BuildContext context) {

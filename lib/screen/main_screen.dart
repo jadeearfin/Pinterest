@@ -19,7 +19,7 @@ class _MainScreenState extends State<MainScreen> {
     const ExploreScreen(),
     const AddScreen(),
     const NotificationScreen(),
-    const ProfileScreen()
+    ProfileScreen()
   ];
 
   void _onItemTapped(int index) {
